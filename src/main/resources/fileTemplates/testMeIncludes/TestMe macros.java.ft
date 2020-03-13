@@ -98,12 +98,22 @@ assertEquals(result#{if}($TestSubjectUtils.isJavaFuture($method.returnType)).get
 #renderJavaReturnVar($method.returnType)#if($method.static)$testedClassName#{else}$StringUtils.deCapitalizeFirstLetter($testedClassName)#end.${method.name}($TestBuilder.renderMethodParams($method,$replacementTypes,$defaultTypeValues));
 #end
 ##
+#macro(renderMockMvcCall $method,$testedClass)
+MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.$TestBuilder.renderMockMvcMethodCall($method,$testedClass,$replacementTypes,$defaultTypeValues)
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("000"))
+        .andExpect(jsonPath("$.data").value("replaceMeWithExpectedResult"))
+        .andReturn();
+#end
+##
 #macro(renderMockStubs $method $testedClassFields)
 #foreach($field in $testedClassFields)
 #if($MockitoMockBuilder.isMockable($field))
 #foreach($fieldMethod in $field.type.methods)
-#if($fieldMethod.returnType && $fieldMethod.returnType.name !="void" && $TestSubjectUtils.isMethodCalled($fieldMethod,$method))
-        when($field.name.${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"))).thenReturn($TestBuilder.renderReturnParam($method,$fieldMethod.returnType,"${fieldMethod.name}Response",$replacementTypes,$defaultTypeValues));
+#if($TestSubjectUtils.isMethodCalled($fieldMethod,$method))
+#if($fieldMethod.returnType && $fieldMethod.returnType.name !="void")
+when($field.name.${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"))).thenReturn($TestBuilder.renderReturnParam($method,$fieldMethod.returnType,"${fieldMethod.name}Response",$replacementTypes,$defaultTypeValues));
+#{else}doNothing().when($field.name).${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"));#end
 #end
 #end
 #end

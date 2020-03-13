@@ -1,5 +1,6 @@
 package com.weirddev.testme.intellij.template.context;
 
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -61,6 +62,11 @@ public class Type {
      */
     final List<String> childObjectsQualifiedNames;
 
+    /**
+     * MockMvc Url
+     */
+    private String mockMvcUrl;
+
     Type(String canonicalName, String name, String packageName, boolean isPrimitive, boolean isInterface, boolean isAbstract, boolean array, boolean varargs, List<Type> composedTypes) {
         this.canonicalName = canonicalName;
         this.name = name;
@@ -111,6 +117,7 @@ public class Type {
         caseClass = psiClass != null && LanguageUtils.isScala(psiClass.getLanguage()) && ScalaTypeUtils.isCaseClass(psiClass);
         sealed = psiClass != null && LanguageUtils.isScala(psiClass.getLanguage()) && ScalaTypeUtils.isSealed(psiClass);
         childObjectsQualifiedNames = sealed ? ScalaPsiTreeUtils.findChildObjectsQualifiedNameInFile(psiClass):new ArrayList<>();
+        mockMvcUrl = resolveMvcUrl(psiClass);
     }
 
     public Type(PsiClass psiClass, TypeDictionary typeDictionary, int maxRecursionDepth, boolean shouldResolveAllMethods) {
@@ -136,6 +143,7 @@ public class Type {
         caseClass = LanguageUtils.isScala(psiClass.getLanguage()) && ScalaTypeUtils.isCaseClass(psiClass);
         sealed = LanguageUtils.isScala(psiClass.getLanguage()) && ScalaTypeUtils.isSealed(psiClass);;
         childObjectsQualifiedNames = sealed ? ScalaPsiTreeUtils.findChildObjectsQualifiedNameInFile(psiClass):new ArrayList<>();
+        mockMvcUrl = resolveMvcUrl(psiClass);
     }
 
     @NotNull
@@ -251,6 +259,31 @@ public class Type {
             }
         }
         return types;
+    }
+
+    private String resolveMvcUrl(PsiClass psiClass) {
+        if (psiClass == null) {
+            return "";
+        }
+
+        PsiAnnotation[] annotations = psiClass.getAnnotations();
+        for (PsiAnnotation annotation : annotations) {
+            // @RequestMapping("/inhospital_service/case")
+            if (annotation.getText().startsWith("@RequestMapping")) {
+                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
+                for (JvmAnnotationAttribute attribute : attributes) {
+                    if("value".equals(attribute.getAttributeName()) ||
+                            "path".equals(attribute.getAttributeName())) {
+                        // "/inhospital_service/case"
+                        String rawUrl = attribute.getAttributeValue().getSourceElement().getText();
+                        return rawUrl.replace("\"", "");
+                    }
+                }
+                break;
+            }
+        }
+
+        return "";
     }
 
     private boolean hasModifier(PsiClass psiClass, String aStatic) {
@@ -381,5 +414,9 @@ public class Type {
 
     public List<String> getChildObjectsQualifiedNames() {
         return childObjectsQualifiedNames;
+    }
+
+    public String getMockMvcUrl() {
+        return mockMvcUrl;
     }
 }

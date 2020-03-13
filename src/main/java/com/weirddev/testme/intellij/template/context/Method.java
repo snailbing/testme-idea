@@ -1,5 +1,6 @@
 package com.weirddev.testme.intellij.template.context;
 
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -86,6 +87,13 @@ public class Method {
     private final String methodId;
     private final Set<Field> indirectlyAffectedFields = new HashSet<Field>(); //Fields affected(assigned to ) by methods called from this method. calculated only for ctors. i.e. when delegating to other ctors
 
+    /**
+     * MockMvc Url
+     */
+    private String mockMvcUrl;
+
+    private String httpOperation;
+
     public Method(PsiMethod psiMethod, PsiClass srcClass, int maxRecursionDepth,TypeDictionary typeDictionary) {
         isPrivate = psiMethod.hasModifierProperty(PsiModifier.PRIVATE);
         isProtected = psiMethod.hasModifierProperty(PsiModifier.PROTECTED);
@@ -117,6 +125,51 @@ public class Method {
         final List<Pair<PsiMethod, PsiSubstitutor>> methodSubstitutionMap = findMethodSubstitutionMap(psiMethod, srcClass);
         this.returnType = resolveReturnType(psiMethod, methodSubstitutionMap, maxRecursionDepth, typeDictionary);
         methodParams = extractMethodParams(psiMethod, methodSubstitutionMap, primaryConstructor, maxRecursionDepth, typeDictionary);
+
+        PsiAnnotation[] annotations = psiMethod.getAnnotations();
+        for (PsiAnnotation annotation : annotations) {
+            // @RequestMapping("/inhospital_service/case")
+            if (annotation.getText().startsWith("@RequestMapping")) {
+                httpOperation = "";
+            } else if (annotation.getText().startsWith("@PostMapping")) {
+                httpOperation = "post";
+            } else if (annotation.getText().startsWith("@GetMapping")) {
+                httpOperation = "get";
+            } else if (annotation.getText().startsWith("@DeleteMapping")) {
+                httpOperation = "delete";
+            } else if (annotation.getText().startsWith("@PatchMapping")) {
+                httpOperation = "patch";
+            } else if (annotation.getText().startsWith("@PutMapping")) {
+                httpOperation = "put";
+            } else {
+                continue;
+            }
+
+            List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
+            for (JvmAnnotationAttribute attribute : attributes) {
+                String value = attribute.getAttributeValue().getSourceElement().getText();
+                switch (attribute.getAttributeName()) {
+                    case "value":
+                    case "path":
+                        // "/inhospital_service/case"
+                        mockMvcUrl = value.replace("\"", "");
+                        break;
+                    case "method":
+                        if (value.contains("GET")) {
+                            httpOperation = "get";
+                        } else if (value.contains("POST")) {
+                            httpOperation = "post";
+                        } else if (value.contains("DELETE")) {
+                            httpOperation = "delete";
+                        } else if (value.contains("PUT")) {
+                            httpOperation = "put";
+                        } else if (value.contains("PATCH")) {
+                            httpOperation = "patch";
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     private boolean isInterface(PsiMethod psiMethod) {
@@ -470,5 +523,13 @@ public class Method {
 
     public boolean isSynthetic() {
         return isSynthetic;
+    }
+
+    public String getMockMvcUrl() {
+        return mockMvcUrl;
+    }
+
+    public String getHttpOperation() {
+        return httpOperation;
     }
 }

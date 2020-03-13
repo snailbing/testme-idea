@@ -1,0 +1,77 @@
+#parse("TestMe macros.java")
+#set($hasMocks=$MockitoMockBuilder.hasMockable($TESTED_CLASS.fields))
+#if($PACKAGE_NAME)
+package ${PACKAGE_NAME};
+#end
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seeing.core.http.service.MyResponseBodyAdvice;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
+#if($hasMocks)
+import org.junit.Before;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+//import static org.mockito.Mockito.*;
+#end
+
+#parse("File Header.java")
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class ${CLASS_NAME} {
+#renderMockedFields($TESTED_CLASS.fields)
+#renderTestSubjectInit($TESTED_CLASS,$TestSubjectUtils.hasTestableInstanceMethod($TESTED_CLASS.methods),$hasMocks)
+
+private MockMvc mockMvc;
+
+@Autowired
+private ObjectMapper objectMapper;
+
+#if($hasMocks)
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+
+        mockMvc = MockMvcBuilders.standaloneSetup($StringUtils.deCapitalizeFirstLetter($TESTED_CLASS.name))
+                .setControllerAdvice(new MyResponseBodyAdvice(objectMapper))
+                .build();
+    }
+#end
+#foreach($method in $TESTED_CLASS.methods)
+#if($TestSubjectUtils.shouldBeTested($method))
+
+    @Test
+    public void #renderTestMethodName($method.name)() throws Exception {
+#if($MockitoMockBuilder.shouldStub($method,$TESTED_CLASS.fields))
+#renderMockStubs($method,$TESTED_CLASS.fields)
+#end
+    #renderMockMvcCall($method,$TESTED_CLASS)
+
+#if($method.hasReturn())
+        //then
+        //Assert.assertEquals(response.getStatus(), HttpStatus.OK.value());
+#end
+    }
+#end
+#end
+}
+
+#parse("TestMe Footer.java")

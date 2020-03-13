@@ -1,5 +1,7 @@
 package com.weirddev.testme.intellij.template.context;
 
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.weirddev.testme.intellij.common.utils.LanguageUtils;
@@ -7,6 +9,7 @@ import com.weirddev.testme.intellij.scala.resolvers.ScalaPsiTreeUtils;
 import com.weirddev.testme.intellij.template.TypeDictionary;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -17,9 +20,52 @@ public class Param {
     private final Type type;
     private String name;
     private final ArrayList<Field> assignedToFields;
+    private boolean isPathVariable = false;
+    private boolean isRequestHeader = false;
+    private boolean isRequestBody = false;
+    private boolean isRequestParam = false;
+    private String requestName = "";
 
     public Param(PsiParameter psiParameter, Optional<PsiType> substitutedType, TypeDictionary typeDictionary, int maxRecursionDepth, ArrayList<Field> assignedToFields, boolean shouldResolveAllMethods) {
         this(resolveType(psiParameter, substitutedType,shouldResolveAllMethods, typeDictionary, maxRecursionDepth), psiParameter.getName(),assignedToFields);
+        PsiAnnotation[] annotations = psiParameter.getAnnotations();
+        for (PsiAnnotation annotation : annotations) {
+            if (annotation.getText().startsWith("@PathVariable")) {
+                isPathVariable = true;
+                break;
+            }
+
+            if (annotation.getText().startsWith("@RequestBody")) {
+                isRequestBody = true;
+                break;
+            }
+
+            if (annotation.getText().startsWith("@RequestParam")) {
+                isRequestParam = true;
+                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
+                for (JvmAnnotationAttribute attribute : attributes) {
+                    if("value".equals(attribute.getAttributeName()) ||
+                            "name".equals(attribute.getAttributeName())) {
+                        requestName = attribute.getAttributeValue().getSourceElement().getText();
+                        break;
+                    }
+                }
+                break;
+            }
+
+            if (annotation.getText().startsWith("@RequestHeader")) {
+                isRequestHeader = true;
+                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
+                for (JvmAnnotationAttribute attribute : attributes) {
+                    if("value".equals(attribute.getAttributeName()) ||
+                            "name".equals(attribute.getAttributeName())) {
+                        requestName = attribute.getAttributeValue().getSourceElement().getText();
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     private static Type resolveType(PsiParameter psiParameter, Optional<PsiType> substitutedType, boolean shouldResolveAllMethods, TypeDictionary typeDictionary, int maxRecursionDepth) {
@@ -67,4 +113,25 @@ public class Param {
     public String toString() {
         return "Param{" + "name='" + name + ", type=" + type + '\'' + ", assignedToFields=" + assignedToFields + '}';
     }
+
+    public boolean isPathVariable() {
+        return isPathVariable;
+    }
+
+    public boolean isRequestBody() {
+        return isRequestBody;
+    }
+
+    public boolean isRequestParam() {
+        return isRequestParam;
+    }
+
+    public boolean isRequestHeader() {
+        return isRequestHeader;
+    }
+
+    public String getRequestName() {
+        return requestName;
+    }
+
 }
