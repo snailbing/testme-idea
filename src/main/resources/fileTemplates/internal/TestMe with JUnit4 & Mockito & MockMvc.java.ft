@@ -64,12 +64,17 @@ private ObjectMapper objectMapper;
 #renderMockStubs($method,$TESTED_CLASS.fields)
 #end
     #renderMockMvcCall($method,$TESTED_CLASS)
-
-#if($method.hasReturn())
-        //then
-        //Assert.assertEquals(response.getStatus(), HttpStatus.OK.value());
-#end
     }
+
+#if($method.paramIsOptional)
+    @Test
+    public void #renderTestMethodName($method.name)ParamOptional() throws Exception {
+#if($MockitoMockBuilder.shouldStub($method,$TESTED_CLASS.fields))
+    #renderMockStubs($method,$TESTED_CLASS.fields)
+#end
+#renderMockMvcParamOptionalCall($method,$TESTED_CLASS)
+    }
+#end
 #end
 #end
 }

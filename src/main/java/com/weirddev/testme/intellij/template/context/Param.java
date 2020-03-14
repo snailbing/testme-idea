@@ -25,6 +25,7 @@ public class Param {
     private boolean isRequestBody = false;
     private boolean isRequestParam = false;
     private String requestName = "";
+    private boolean optional = false;
 
     public Param(PsiParameter psiParameter, Optional<PsiType> substitutedType, TypeDictionary typeDictionary, int maxRecursionDepth, ArrayList<Field> assignedToFields, boolean shouldResolveAllMethods) {
         this(resolveType(psiParameter, substitutedType,shouldResolveAllMethods, typeDictionary, maxRecursionDepth), psiParameter.getName(),assignedToFields);
@@ -37,6 +38,13 @@ public class Param {
 
             if (annotation.getText().startsWith("@RequestBody")) {
                 isRequestBody = true;
+                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
+                for (JvmAnnotationAttribute attribute : attributes) {
+                    if ("required".equals(attribute.getAttributeName())) {
+                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
+                        break;
+                    }
+                }
                 break;
             }
 
@@ -44,10 +52,11 @@ public class Param {
                 isRequestParam = true;
                 List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
                 for (JvmAnnotationAttribute attribute : attributes) {
-                    if("value".equals(attribute.getAttributeName()) ||
+                    if ("value".equals(attribute.getAttributeName()) ||
                             "name".equals(attribute.getAttributeName())) {
                         requestName = attribute.getAttributeValue().getSourceElement().getText();
-                        break;
+                    } else if ("required".equals(attribute.getAttributeName())) {
+                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
                     }
                 }
                 break;
@@ -57,10 +66,11 @@ public class Param {
                 isRequestHeader = true;
                 List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
                 for (JvmAnnotationAttribute attribute : attributes) {
-                    if("value".equals(attribute.getAttributeName()) ||
+                    if ("value".equals(attribute.getAttributeName()) ||
                             "name".equals(attribute.getAttributeName())) {
                         requestName = attribute.getAttributeValue().getSourceElement().getText();
-                        break;
+                    } else if ("required".equals(attribute.getAttributeName())) {
+                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
                     }
                 }
                 break;
@@ -134,4 +144,7 @@ public class Param {
         return requestName;
     }
 
+    public boolean isOptional() {
+        return optional;
+    }
 }

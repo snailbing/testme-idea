@@ -11,6 +11,8 @@ import java.util.Map;
 public interface TestBuilder {
     String RESULT_VARIABLE_NAME = "expectedResult";
 
+    String renderMockMvcParamOptionalCall(Method method, Type type, Map<String, String> replacementTypes, Map<String, String> defaultTypeValues) throws Exception;
+
     String renderMockMvcMethodCall(Method method, Type type, Map<String, String> replacementTypes, Map<String, String> defaultTypeValues) throws Exception;
 
     String renderMethodParams(Method method, Map<String, String> replacementTypes, Map<String, String> defaultTypeValues) throws Exception;

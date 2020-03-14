@@ -102,8 +102,16 @@ assertEquals(result#{if}($TestSubjectUtils.isJavaFuture($method.returnType)).get
 MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.$TestBuilder.renderMockMvcMethodCall($method,$testedClass,$replacementTypes,$defaultTypeValues)
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("000"))
-        .andExpect(jsonPath("$.data").value("replaceMeWithExpectedResult"))
+        .andExpect(jsonPath("$.data").value($TestBuilder.renderReturnParam($method,$method.returnType,"replaceMeWithExpectedResult",$replacementTypesForReturn,$defaultTypeValues)))
         .andReturn();
+#end
+##
+#macro(renderMockMvcParamOptionalCall $method,$testedClass)
+MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.$TestBuilder.renderMockMvcParamOptionalCall($method,$testedClass,$replacementTypes,$defaultTypeValues)
+.andExpect(MockMvcResultMatchers.status().isOk())
+.andExpect(MockMvcResultMatchers.jsonPath("$.status").value("000"))
+.andExpect(jsonPath("$.data").value($TestBuilder.renderReturnParam($method,$method.returnType,"replaceMeWithExpectedResult",$replacementTypesForReturn,$defaultTypeValues)))
+.andReturn();
 #end
 ##
 #macro(renderMockStubs $method $testedClassFields)
@@ -113,7 +121,9 @@ MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.$TestBuilder.render
 #if($TestSubjectUtils.isMethodCalled($fieldMethod,$method))
 #if($fieldMethod.returnType && $fieldMethod.returnType.name !="void")
 when($field.name.${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"))).thenReturn($TestBuilder.renderReturnParam($method,$fieldMethod.returnType,"${fieldMethod.name}Response",$replacementTypes,$defaultTypeValues));
-#{else}doNothing().when($field.name).${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"));#end
+#{else}
+doNothing().when($field.name).${fieldMethod.name}($MockitoMockBuilder.buildMockArgsMatchers(${fieldMethod.methodParams},"Java"));#end
+
 #end
 #end
 #end

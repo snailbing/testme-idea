@@ -11,10 +11,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.weirddev.testme.intellij.common.reflection.MethodReflectionUtils;
+import com.weirddev.testme.intellij.common.utils.LanguageUtils;
 import com.weirddev.testme.intellij.common.utils.PsiMethodUtils;
 import com.weirddev.testme.intellij.groovy.resolvers.GroovyPsiTreeUtils;
-import com.weirddev.testme.intellij.common.utils.LanguageUtils;
 import com.weirddev.testme.intellij.resolvers.to.MethodCallArg;
 import com.weirddev.testme.intellij.resolvers.to.ResolvedMethodCall;
 import com.weirddev.testme.intellij.resolvers.to.ResolvedReference;
@@ -94,6 +93,8 @@ public class Method {
 
     private String httpOperation;
 
+    private boolean paramIsOptional = false;
+
     public Method(PsiMethod psiMethod, PsiClass srcClass, int maxRecursionDepth,TypeDictionary typeDictionary) {
         isPrivate = psiMethod.hasModifierProperty(PsiModifier.PRIVATE);
         isProtected = psiMethod.hasModifierProperty(PsiModifier.PROTECTED);
@@ -167,7 +168,16 @@ public class Method {
                             httpOperation = "patch";
                         }
                         break;
+                    default:
+                        break;
                 }
+            }
+        }
+
+        for (Param param: methodParams) {
+            if(param.isOptional()) {
+                this.paramIsOptional = true;
+                break;
             }
         }
     }
@@ -531,5 +541,9 @@ public class Method {
 
     public String getHttpOperation() {
         return httpOperation;
+    }
+
+    public boolean isParamIsOptional() {
+        return paramIsOptional;
     }
 }
