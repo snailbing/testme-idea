@@ -65,9 +65,9 @@ public class TestBuilderImpl implements TestBuilder {
                 sb.append(".contentType(MediaType.APPLICATION_JSON_UTF8)\n");
                 sb.append(".content(objectMapper.writeValueAsString(").append(callParams).append("))\n");
             } else if (param.isRequestParam()) {
-                sb.append(".param(").append(param.getRequestName()).append(",").append(callParams).append(")\n");
+                sb.append(".param(\"").append(param.getRequestName()).append("\",").append(callParams).append(")\n");
             } else if (param.isRequestHeader()) {
-                sb.append(".header(").append(param.getRequestName()).append(",").append(callParams).append(")\n");
+                sb.append(".header(\"").append(param.getRequestName()).append("\",").append(callParams).append(")\n");
             }
         }
 

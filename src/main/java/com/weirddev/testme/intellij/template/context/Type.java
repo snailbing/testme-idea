@@ -1,6 +1,5 @@
 package com.weirddev.testme.intellij.template.context;
 
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -270,16 +269,10 @@ public class Type {
         for (PsiAnnotation annotation : annotations) {
             // @RequestMapping("/inhospital_service/case")
             if (annotation.getText().startsWith("@RequestMapping")) {
-                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
-                for (JvmAnnotationAttribute attribute : attributes) {
-                    if("value".equals(attribute.getAttributeName()) ||
-                            "path".equals(attribute.getAttributeName())) {
-                        // "/inhospital_service/case"
-                        String rawUrl = attribute.getAttributeValue().getSourceElement().getText();
-                        return rawUrl.replace("\"", "");
-                    }
+                PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+                if (value != null) {
+                    return value.getText().replace("\"", "");
                 }
-                break;
             }
         }
 

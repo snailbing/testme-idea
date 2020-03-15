@@ -1,7 +1,7 @@
 package com.weirddev.testme.intellij.template.context;
 
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.weirddev.testme.intellij.common.utils.LanguageUtils;
@@ -9,7 +9,6 @@ import com.weirddev.testme.intellij.scala.resolvers.ScalaPsiTreeUtils;
 import com.weirddev.testme.intellij.template.TypeDictionary;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,40 +37,35 @@ public class Param {
 
             if (annotation.getText().startsWith("@RequestBody")) {
                 isRequestBody = true;
-                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
-                for (JvmAnnotationAttribute attribute : attributes) {
-                    if ("required".equals(attribute.getAttributeName())) {
-                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
-                        break;
-                    }
+                PsiAnnotationMemberValue value = annotation.findAttributeValue("required");
+                if (value != null) {
+                    optional = "false".equals(value.getText());
                 }
                 break;
             }
 
             if (annotation.getText().startsWith("@RequestParam")) {
                 isRequestParam = true;
-                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
-                for (JvmAnnotationAttribute attribute : attributes) {
-                    if ("value".equals(attribute.getAttributeName()) ||
-                            "name".equals(attribute.getAttributeName())) {
-                        requestName = attribute.getAttributeValue().getSourceElement().getText();
-                    } else if ("required".equals(attribute.getAttributeName())) {
-                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
-                    }
+                PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+                if (value != null) {
+                    requestName = value.getText().replace("\"", "");
+                }
+                PsiAnnotationMemberValue required = annotation.findAttributeValue("required");
+                if (required != null) {
+                    optional = "false".equals(required.getText());
                 }
                 break;
             }
 
             if (annotation.getText().startsWith("@RequestHeader")) {
                 isRequestHeader = true;
-                List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
-                for (JvmAnnotationAttribute attribute : attributes) {
-                    if ("value".equals(attribute.getAttributeName()) ||
-                            "name".equals(attribute.getAttributeName())) {
-                        requestName = attribute.getAttributeValue().getSourceElement().getText();
-                    } else if ("required".equals(attribute.getAttributeName())) {
-                        optional = "false".equals(attribute.getAttributeValue().getSourceElement().getText());
-                    }
+                PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+                if (value != null) {
+                    requestName = value.getText().replace("\"", "");
+                }
+                PsiAnnotationMemberValue required = annotation.findAttributeValue("required");
+                if (required != null) {
+                    optional = "false".equals(required.getText());
                 }
                 break;
             }

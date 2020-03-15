@@ -1,6 +1,5 @@
 package com.weirddev.testme.intellij.template.context;
 
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -146,30 +145,23 @@ public class Method {
                 continue;
             }
 
-            List<JvmAnnotationAttribute> attributes = annotation.getAttributes();
-            for (JvmAnnotationAttribute attribute : attributes) {
-                String value = attribute.getAttributeValue().getSourceElement().getText();
-                switch (attribute.getAttributeName()) {
-                    case "value":
-                    case "path":
-                        // "/inhospital_service/case"
-                        mockMvcUrl = value.replace("\"", "");
-                        break;
-                    case "method":
-                        if (value.contains("GET")) {
-                            httpOperation = "get";
-                        } else if (value.contains("POST")) {
-                            httpOperation = "post";
-                        } else if (value.contains("DELETE")) {
-                            httpOperation = "delete";
-                        } else if (value.contains("PUT")) {
-                            httpOperation = "put";
-                        } else if (value.contains("PATCH")) {
-                            httpOperation = "patch";
-                        }
-                        break;
-                    default:
-                        break;
+            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
+            if (value != null) {
+                mockMvcUrl = value.getText().replace("\"", "");
+            }
+            PsiAnnotationMemberValue method = annotation.findAttributeValue("method");
+            if (method != null) {
+                String rawValue = method.getText();
+                if (rawValue.contains("GET")) {
+                    httpOperation = "get";
+                } else if (rawValue.contains("POST")) {
+                    httpOperation = "post";
+                } else if (rawValue.contains("DELETE")) {
+                    httpOperation = "delete";
+                } else if (rawValue.contains("PUT")) {
+                    httpOperation = "put";
+                } else if (rawValue.contains("PATCH")) {
+                    httpOperation = "patch";
                 }
             }
         }
